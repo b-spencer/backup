@@ -1,0 +1,110 @@
+#!/bin/bash
+#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+#
+# Backup the system to the removable drive in /dev/sdd1 with duplicity.
+#
+set -e -o pipefail
+
+# Our mount expectations.
+dir=/removable/backup
+device=/dev/disk/by-id/usb-WD_My_Passport_25E1_57584631413437364330354C-0:0-part1
+
+#-----------------------------------------------------------------------------
+# Pre-flight check.
+
+# Figure out where $1 is mounted and echo it.
+function find-dir-mount ()
+{
+  perl -ne 'if(m!^(\S+)\s+('$1')\s!){ print "$1\n"; last}' /proc/mounts
+}
+
+# See if the device is mounted and where.
+dev=$(find-dir-mount $dir)
+if [ -z "$dev" ]; then
+  echo -n "Did not found $dir mounted.  Attempt to mount it now [y/N]? "
+  read input
+  if [ "$input" != "y" ]; then
+    echo "Not confirmed."
+    exit 1
+  fi
+  mount $dir
+
+  # Auto unmount on exit if we can
+  trap 'echo "Unmounting $dir since we mounted it."; umount $dir' EXIT TERM INT QUIT
+  echo "Will unmount $dir when the backup terminates."
+fi
+
+# Check again.
+dev=$(find-dir-mount $dir)
+if [ -z "$dev" ]; then
+  echo  "Did not found $dir mounted."
+  exit 1
+fi
+
+# Confirm that $dev starts with '/dev/'
+if [ "$(echo "$dev" |cut -b1-5)" != "/dev/" ]; then
+  echo "Can't determine mount point of $dir; found: $dev"
+  exit 1
+fi
+echo "Found $dir mounted on $dev"
+
+# Check identity of $dev
+if [ "$(readlink -e $device)" != "$dev" ]; then
+  echo "Could not confirm that $dev is $device."
+  exit 1
+fi
+echo "Confirmed that $dev is the expected device $device"
+
+#-----------------------------------------------------------------------------
+# Prep.
+
+# First display all but the most recent full backup to prepare for deleting
+# them.
+duplicity remove-all-but-n-full 1 file://$dir/duplicity
+echo -n "Delete all but the most recent full backup [y/N]? "
+read input
+if [ "$input" = "y" ]; then
+  duplicity remove-all-but-n-full 1 file://$dir/duplicity --force
+else
+  echo "Leaving all exiting backups in place."
+fi
+
+#-----------------------------------------------------------------------------
+# Perform the backup.  This will prompt for the passphrase.
+
+duplicity \
+    --progress full \
+    --dry-run \
+    --exclude-device-files \
+    \
+    --include /boot \
+    --include /data \
+    --include /etc \
+    \
+    --exclude /home/*/.cache \
+    --include /home \
+    \
+    --include /opt \
+    --include /root \
+    --include /sbin \
+    --include /usr/local \
+    \
+    --exclude /var/autofs \
+    --exclude /var/cache \
+    --exclude /var/lib/mythtv \
+    --exclude /var/lock \
+    --exclude /var/run \
+    --exclude /var/tmp \
+    --include /var \
+    \
+    --exclude '**' \
+    \
+    / file://$dir/duplicity
+
+#-----------------------------------------------------------------------------
+# Finished
+
+echo "Done."
+
+#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+          
