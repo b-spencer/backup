@@ -103,7 +103,12 @@ duplicity \
 #-----------------------------------------------------------------------------
 # Finished
 
+# How to power it off:
+echo "To power off the drive:"
+echo "udisksctl power-off -b $dev"
+
 echo "Done."
+
 
 #*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
           
