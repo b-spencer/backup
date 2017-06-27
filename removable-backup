@@ -74,7 +74,6 @@ fi
 
 duplicity \
     --progress full \
-    --dry-run \
     --exclude-device-files \
     \
     --include /boot \
