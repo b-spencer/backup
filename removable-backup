@@ -21,7 +21,7 @@ function find-dir-mount ()
 # See if the device is mounted and where.
 dev=$(find-dir-mount $dir)
 if [ -z "$dev" ]; then
-  echo -n "Did not found $dir mounted.  Attempt to mount it now [y/N]? "
+  echo -n "Did not find $dir mounted.  Attempt to mount it now [y/N]? "
   read input
   if [ "$input" != "y" ]; then
     echo "Not confirmed."
