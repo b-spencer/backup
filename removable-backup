@@ -5,9 +5,35 @@
 #
 set -e -o pipefail
 
-# Our mount expectations.
-dir=/removable/backup
-device=/dev/disk/by-id/usb-WD_My_Passport_25E1_57584631413437364330354C-0:0-part1
+# Our mount expectations.  There are two physical disks and either (or both)
+# could be connected.  We use the first one we find.
+dir1=/removable/backup1
+device1=/dev/disk/by-id/usb-WD_My_Passport_25E1_57584631413437364330354C-0:0-part1
+dir2=/removable/backup2
+device2=/dev/disk/by-id/usb-WD_My_Passport_25E2_57584A3141373741324B4A48-0:0-part1
+
+#-----------------------------------------------------------------------------
+# Which device and dir should we use?
+
+# Look for them in order.
+dir=
+device=
+for i in 1 2; do
+  ldir=dir$i
+  ldevice=device$i
+  echo -n "Looking for ${!ldir} device ${!ldevice} . . ."
+  if [ -e "${!ldevice}" ]; then
+    dir=${!ldir}
+    device=${!ldevice}
+    echo " found!"
+    break
+  fi
+  echo " not found."
+done
+if [ -z "$dir" -o -z "$device" ]; then
+  echo "Couldn't find any devices connected."
+fi
+unset ldir ldevice
 
 #-----------------------------------------------------------------------------
 # Pre-flight check.
