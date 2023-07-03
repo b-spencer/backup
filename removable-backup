@@ -110,6 +110,7 @@ duplicity \
     --include /home \
     \
     --include /opt \
+    --exclude /root/.cache \
     --include /root \
     --include /sbin \
     --include /usr/local \
