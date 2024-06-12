@@ -84,6 +84,10 @@ echo "Confirmed that $dev is the expected device $device"
 #-----------------------------------------------------------------------------
 # Prep.
 
+# Show the collection status.
+echo "Gathering current collection status . . ."
+duplicity collection-status file://$dir/duplicity
+
 # First display all but the most recent full backup to prepare for deleting
 # them.
 duplicity remove-all-but-n-full 1 file://$dir/duplicity
@@ -96,6 +100,27 @@ else
 fi
 
 #-----------------------------------------------------------------------------
+# Print an approximate usage total.
+
+du -hsc \
+  --exclude /home/spencer/.cache \
+  --exclude /root/.cache \
+  --exclude /var/autofs \
+  --exclude /var/cache \
+  --exclude /var/lib/mythtv \
+  --exclude /var/lock \
+  --exclude /var/run \
+  /boot \
+  /data \
+  /etc \
+  /home \
+  /opt \
+  /root \
+  /sbin \
+  /usr/local \
+  /var
+
+#-----------------------------------------------------------------------------
 # Perform the backup.  This will prompt for the passphrase.
 
 duplicity \
@@ -106,7 +131,7 @@ duplicity \
     --include /data \
     --include /etc \
     \
-    --exclude /home/*/.cache \
+    --exclude '/home/*/.cache' \
     --include /home \
     \
     --include /opt \
